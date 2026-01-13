@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0f172a">
+    <title>Калькулятор рассрочки</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        body {
+            background-color: #0f172a;
+            margin: 0;
+            padding: 0;
+            font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .custom-shadow {
+            box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Исправленный компонент иконок
+        const Icon = ({ name, size = 24, className = "" }) => {
+            const iconRef = useRef(null);
+
+            useEffect(() => {
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                } else {
+                    // Если библиотека еще грузится, пробуем через короткий интервал
+                    const interval = setInterval(() => {
+                        if (window.lucide) {
+                            window.lucide.createIcons();
+                            clearInterval(interval);
+                        }
+                    }, 100);
+                    return () => clearInterval(interval);
+                }
+            }, [name]);
+
+            return <i data-lucide={name} className={className} style={{ width: size, height: size }}></i>;
+        };
+
+        const App = () => {
+            const [totalAmount, setTotalAmount] = useState(0);
+            const [hasDownPayment, setHasDownPayment] = useState(true);
+            const [months, setMonths] = useState(3);
+
+            const getConditions = (m, withDP) => {
+                if (withDP) {
+                    switch (m) {
+                        case 3: return { rate: 0.08, min: 25000, max: Infinity };
+                        case 6: return { rate: 0.16, min: 25000, max: Infinity };
+                        case 9: return { rate: 0.23, min: 25000, max: Infinity };
+                        case 12: return { rate: 0.30, min: 30000, max: Infinity };
+                        default: return { rate: 0, min: 0, max: Infinity };
+                    }
+                } else {
+                    const rates = { 3: 0.12, 6: 0.22, 9: 0.33, 12: 0.42 };
+                    return { rate: rates[m], min: 25000, max: 100000 };
+                }
+            };
+
+            const current = getConditions(months, hasDownPayment);
+            const isAmountValid = totalAmount >= current.min && totalAmount <= (current.max || Infinity);
+            
+            const markupValue = totalAmount * current.rate;
+            const totalWithMarkup = totalAmount + markupValue;
+            const downPaymentAmount = hasDownPayment ? totalWithMarkup * 0.20 : 0;
+            const monthlyPayment = (totalWithMarkup - downPaymentAmount) / months;
+
+            const handleAmountChange = (e) => {
+                const val = e.target.value.replace(/\D/g, '');
+                setTotalAmount(val === '' ? 0 : Number(val));
+            };
+
+            const shareCalculation = () => {
+                const fmt = (num) => Math.round(num).toLocaleString('ru-RU');
+                let text = `📋 ГРАФИК ПЛАТЕЖЕЙ\n━━━━━━━━━━━━━━\n💰 Сумма: ${fmt(totalAmount)} ₽\n⏳ Срок: ${months} мес.\n━━━━━━━━━━━━━━\n\n`;
+                if (hasDownPayment) {
+                    text += `🔴 ПЕРВЫЙ ВЗНОС: ${fmt(downPaymentAmount)} ₽\n\n`;
+                } else {
+                    text += `🟢 БЕЗ ВЗНОСА\n\n`;
+                }
+                text += `📅 ПЛАТЕЖИ:\n`;
+                for (let i = 1; i <= months; i++) {
+                    text += `${i} мес: ${fmt(monthlyPayment)} ₽\n`;
+                }
+                text += `\n✅ ИТОГО: ${fmt(totalWithMarkup)} ₽`;
+
+                if (navigator.share) {
+                    navigator.share({ title: 'Рассрочка', text: text }).catch(() => {});
+                } else {
+                    navigator.clipboard.writeText(text).then(() => alert('Скопировано!'));
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-900 text-slate-100 flex justify-center p-0 md:p-6">
+                    <div className="w-full max-w-xl bg-slate-900 md:rounded-[2rem] custom-shadow overflow-hidden flex flex-col border-x border-slate-800">
+                        <div className="bg-indigo-600 p-6 text-white shrink-0">
+                            <div className="flex items-center gap-3">
+                                <Icon name="calculator" size={24} />
+                                <h1 className="text-xl font-bold uppercase tracking-tight">Рассрочка</h1>
+                            </div>
+                        </div>
+
+                        <div className="p-5 space-y-6 flex-1 overflow-y-auto">
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Сумма товара</label>
+                                <div className="relative">
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
+                                        <Icon name="banknote" size={20} />
+                                    </div>
+                                    <input 
+                                        type="text" 
+                                        inputMode="numeric"
+                                        value={totalAmount === 0 ? '' : totalAmount.toLocaleString('ru-RU')}
+                                        onChange={handleAmountChange}
+                                        className={`w-full pl-12 pr-10 py-4 bg-slate-800/50 border-2 rounded-2xl text-xl font-bold outline-none transition-all ${totalAmount > 0 && !isAmountValid ? 'border-red-500/50' : 'border-slate-800 focus:border-indigo-600'}`}
+                                        placeholder="0"
+                                    />
+                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">₽</span>
+                                </div>
+                                {totalAmount > 0 && !isAmountValid && (
+                                    <p className="text-[10px] text-red-400 font-bold px-1 uppercase">
+                                        {totalAmount < current.min ? `Мин: ${current.min.toLocaleString()} ₽` : `Макс: ${current.max.toLocaleString()} ₽`}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="flex bg-slate-800/80 p-1 rounded-xl">
+                                    <button onClick={() => setHasDownPayment(true)} className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase transition-all ${hasDownPayment ? 'bg-indigo-600 shadow-lg' : 'text-slate-500'}`}>Со взносом</button>
+                                    <button onClick={() => setHasDownPayment(false)} className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase transition-all ${!hasDownPayment ? 'bg-indigo-600 shadow-lg' : 'text-slate-500'}`}>Без взноса</button>
+                                </div>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {[3, 6, 9, 12].map(m => (
+                                        <button key={m} onClick={() => setMonths(m)} className={`py-3 rounded-xl border-2 transition-all ${months === m ? 'border-indigo-600 bg-indigo-600/10 text-indigo-400' : 'border-slate-800 text-slate-500'}`}>
+                                            <div className="text-sm font-bold">{m}м</div>
+                                            <div className="text-[8px] opacity-60">+{Math.round(getConditions(m, hasDownPayment).rate * 100)}%</div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-800/30 rounded-2xl p-4 border border-slate-800">
+                                <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase mb-2">
+                                    <span>Наценка: {Math.round(markupValue).toLocaleString()} ₽</span>
+                                    <span className="text-indigo-400">Итого: {Math.round(totalWithMarkup).toLocaleString()} ₽</span>
+                                </div>
+                                <div className="h-px bg-slate-800 w-full mb-4"></div>
+                                
+                                {isAmountValid && (
+                                    <div className="space-y-2">
+                                        {hasDownPayment && (
+                                            <div className="flex justify-between bg-indigo-600/20 p-3 rounded-xl border border-indigo-500/30">
+                                                <span className="text-xs font-bold uppercase">Взнос 20%</span>
+                                                <span className="font-bold">{Math.round(downPaymentAmount).toLocaleString()} ₽</span>
+                                            </div>
+                                        )}
+                                        <div className="max-h-[200px] overflow-y-auto pr-1 space-y-2 no-scrollbar">
+                                            {[...Array(months)].map((_, i) => (
+                                                <div key={i} className="flex justify-between bg-slate-800/50 p-3 rounded-xl text-sm">
+                                                    <span className="text-slate-500">{i+1} платеж</span>
+                                                    <span className="font-bold">{Math.round(monthlyPayment).toLocaleString()} ₽</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {isAmountValid && (
+                                <button onClick={shareCalculation} className="w-full bg-indigo-600 hover:bg-indigo-500 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 uppercase text-xs tracking-widest shadow-lg shadow-indigo-900/20">
+                                    <Icon name="share-2" size={16} />
+                                    Отправить клиенту
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+
+        // Регистрация Service Worker вынесена вниз для надежности
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swCode = `
+                    self.addEventListener('install', e => e.waitUntil(caches.open('v1').then(c => c.addAll(['/']))));
+                    self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
+                `;
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+            });
+        }
+    </script>
+</body>
+</html>
