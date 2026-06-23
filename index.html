@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Калькулятор рассрочки</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
@@ -11,8 +11,15 @@
 <script src="https://unpkg.com/lucide@0.525.0/dist/umd/lucide.js"></script>
 
 <style>
-body{background:#0f172a;margin:0;font-family:system-ui;color:white}
-.custom-shadow{box-shadow:0 20px 50px rgba(0,0,0,.5)}
+body{
+background:#0f172a;
+margin:0;
+font-family:system-ui;
+}
+.custom-shadow{
+box-shadow:0 20px 50px rgba(0,0,0,.5);
+}
+.no-scrollbar::-webkit-scrollbar{display:none;}
 </style>
 </head>
 
@@ -21,116 +28,128 @@ body{background:#0f172a;margin:0;font-family:system-ui;color:white}
 
 <script>
 const e = React.createElement;
-const {useState,useEffect,useRef} = React;
+const {useState,useEffect} = React;
 
-function Icon(props){
-  const ref = useRef();
+/* ICON */
+function Icon({name,size=24,className=""}){
+useEffect(()=>{
+if(window.lucide) window.lucide.createIcons();
+});
 
-  useEffect(()=>{
-    if(window.lucide){
-      window.lucide.createIcons();
-    }
-  });
-
-  return e("i",{
-    "data-lucide":props.name,
-    style:{width:props.size,height:props.size},
-    ref:ref,
-    className:props.className
-  });
+return e("i",{
+"data-lucide":name,
+style:{width:size,height:size},
+className
+});
 }
 
 function App(){
 
-const [totalAmount,setTotalAmount]=useState(0);
-const [hasDownPayment,setHasDownPayment]=useState(true);
+const [amount,setAmount]=useState(0);
+const [dp,setDp]=useState(true);
 const [months,setMonths]=useState(3);
 
-const getConditions=(m,withDP)=>{
-if(withDP){
-switch(m){
-case 3:return{rate:0.08,min:20000,max:500000};
-case 6:return{rate:0.16,min:20000,max:500000};
-case 9:return{rate:0.23,min:20000,max:500000};
-case 12:return{rate:0.30,min:20000,max:500000};
+const get=(m,dp)=>{
+if(dp){
+return {
+3:0.08,6:0.16,9:0.23,12:0.30
+}[m];
 }
-}else{
-const r={3:0.12,6:0.22,9:0.33,12:0.42};
-return{rate:r[m],min:20000,max:120000};
-}
+return {
+3:0.12,6:0.22,9:0.33,12:0.42
+}[m];
 };
 
-const c=getConditions(months,hasDownPayment);
-
-const valid = totalAmount>=c.min && totalAmount<=c.max;
-
-const markup=totalAmount*c.rate;
-const total=totalAmount+markup;
-const down=hasDownPayment?total*0.2:0;
+const rate=get(months,dp);
+const total=amount + amount*rate;
+const down=dp?total*0.2:0;
 const monthly=(total-down)/months;
 
-return e("div",{className:"min-h-screen bg-slate-900 flex justify-center p-4"},
-e("div",{className:"w-full max-w-xl bg-slate-900 custom-shadow rounded-3xl overflow-hidden border border-slate-800"},
+const valid=amount>=20000 && amount<= (dp?500000:120000);
 
-// HEADER
-e("div",{className:"bg-indigo-600 p-5 font-bold text-xl flex gap-2 items-center"},
-e(Icon,{name:"calculator",size:22}),
-"Рассрочка"
+return e("div",{className:"min-h-screen bg-slate-900 text-slate-100 flex justify-center p-4"},
+
+e("div",{className:"w-full max-w-xl bg-slate-900 custom-shadow rounded-[2rem] overflow-hidden border border-slate-800"},
+
+// HEADER (как у тебя)
+e("div",{className:"bg-indigo-600 p-6 flex gap-3 items-center"},
+e(Icon,{name:"calculator",size:24}),
+e("h1",{className:"text-xl font-bold uppercase"},"Рассрочка")
 ),
 
-// BODY
-e("div",{className:"p-5 space-y-5"},
+e("div",{className:"p-5 space-y-6"},
 
 // INPUT
 e("input",{
-value:totalAmount||"",
-onChange:(e)=>setTotalAmount(Number(e.target.value.replace(/\D/g,"")||0)),
-placeholder:"Сумма",
-className:"w-full p-4 text-xl bg-slate-800 rounded-xl"
+value:amount?amount.toLocaleString("ru-RU"):"",
+onChange:(e)=>setAmount(Number(e.target.value.replace(/\D/g,"")||0)),
+placeholder:"Сумма товара",
+className:"w-full p-4 bg-slate-800 rounded-2xl text-xl font-bold outline-none"
 }),
 
-// TOGGLE
-e("div",{className:"flex gap-2"},
-e("button",{onClick:()=>setHasDownPayment(true),
-className:`flex-1 p-2 rounded-xl ${hasDownPayment?"bg-indigo-600":"bg-slate-800"}`},
-"Со взносом"),
-e("button",{onClick:()=>setHasDownPayment(false),
-className:`flex-1 p-2 rounded-xl ${!hasDownPayment?"bg-indigo-600":"bg-slate-800"}`},
-"Без взноса")
+// TOGGLE BUTTONS (как у тебя)
+e("div",{className:"flex bg-slate-800 p-1 rounded-xl"},
+e("button",{
+onClick:()=>setDp(true),
+className:`flex-1 py-2 rounded-lg font-bold ${dp?"bg-indigo-600":"text-slate-500"}`
+},"Со взносом"),
+
+e("button",{
+onClick:()=>setDp(false),
+className:`flex-1 py-2 rounded-lg font-bold ${!dp?"bg-indigo-600":"text-slate-500"}`
+},"Без взноса")
 ),
 
 // MONTHS
 e("div",{className:"grid grid-cols-4 gap-2"},
 [3,6,9,12].map(m=>
-e("button",{key:m,onClick:()=>setMonths(m),
-className:`p-3 rounded-xl ${months===m?"bg-indigo-600":"bg-slate-800"}`},
-m+"м")
+e("button",{
+key:m,
+onClick:()=>setMonths(m),
+className:`py-3 rounded-xl border-2 ${
+months===m
+?"border-indigo-600 bg-indigo-600/10 text-indigo-400"
+:"border-slate-800 text-slate-500"
+}`
+},
+e("div",{className:"text-sm font-bold"},m+"м"),
+e("div",{className:"text-[10px] opacity-60"},"+"+Math.round(get(m,dp)*100)+"%")
+)
 )
 ),
 
-// RESULT
-valid && e("div",{className:"bg-slate-800 p-4 rounded-xl space-y-2"},
+// RESULT BLOCK
+valid && e("div",{className:"bg-slate-800/30 rounded-2xl p-4 border border-slate-800 space-y-2"},
 
-hasDownPayment && e("div",{className:"flex justify-between"},
-"Взнос",Math.round(down).toLocaleString()+" ₽"
+e("div",{className:"flex justify-between text-sm text-slate-400"},
+e("span",null,"Наценка"),
+e("span",null,Math.round(amount*rate).toLocaleString("ru-RU")+" ₽")
 ),
 
-e("div",{className:"flex justify-between"},
-"Итого",Math.round(total).toLocaleString()+" ₽"
+e("div",{className:"flex justify-between font-bold"},
+e("span",null,"Итого"),
+e("span",null,Math.round(total).toLocaleString("ru-RU")+" ₽")
 ),
 
-e("div",null,
+dp && e("div",{className:"flex justify-between bg-indigo-600/20 p-3 rounded-xl"},
+e("span",null,"Взнос 20%"),
+e("span",null,Math.round(down).toLocaleString("ru-RU")+" ₽")
+),
+
+e("div",{className:"space-y-2"},
 Array.from({length:months}).map((_,i)=>
-e("div",{key:i,className:"flex justify-between text-sm"},
-(i+1)+" мес",Math.round(monthly).toLocaleString()+" ₽"
-))
+e("div",{key:i,className:"flex justify-between bg-slate-800/50 p-3 rounded-xl text-sm"},
+e("span",null,(i+1)+" платеж"),
+e("span",null,Math.round(monthly).toLocaleString("ru-RU")+" ₽")
+)
+)
 )
 ),
 
 // BUTTON
-valid && e("button",{className:"w-full bg-indigo-600 p-4 rounded-xl font-bold"},
-"Отправить клиенту"
-)
+valid && e("button",{
+className:"w-full bg-indigo-600 hover:bg-indigo-500 py-4 rounded-2xl font-bold uppercase"
+},"Отправить клиенту")
 
 )
 )
