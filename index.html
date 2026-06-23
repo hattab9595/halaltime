@@ -75,8 +75,8 @@
                     }
                 } else {
                     // Лимиты: 20 000 - 120 000
-                    const rates = { 3: 0.12, 6: 0.22, 9: 0.33, 12: 0.42 };
-                    return { rate: rates[m], min: 20000, max: 120000 };
+            const rates = { 3: 0.12, 6: 0.22, 9: 0.33, 12: 0.42 };
+            return { rate: rates[m], min: 20000, max: 120000 };
                 }
             };
 
@@ -126,95 +126,18 @@
 
                         <div className="p-5 space-y-6 flex-1 overflow-y-auto">
                             <div className="space-y-3">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Сумма товара</label>
-                                <div className="relative">
-                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
-                                        <Icon name="banknote" size={20} />
-                                    </div>
-                                    <input 
-                                        type="text" 
-                                        inputMode="numeric"
-                                        value={totalAmount === 0 ? '' : totalAmount.toLocaleString('ru-RU')}
-                                        onChange={handleAmountChange}
-                                        className={`w-full pl-12 pr-10 py-4 bg-slate-800/50 border-2 rounded-2xl text-xl font-bold outline-none transition-all ${totalAmount > 0 && !isAmountValid ? 'border-red-500/50' : 'border-slate-800 focus:border-indigo-600'}`}
-                                        placeholder="0"
-                                    />
-                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">₽</span>
-                                </div>
-                                {totalAmount > 0 && !isAmountValid && (
-                                    <p className="text-[10px] text-red-400 font-bold px-1 uppercase">
-                                        {totalAmount < current.min ? `Мин: ${current.min.toLocaleString()} ₽` : `Макс: ${current.max.toLocaleString()} ₽`}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="space-y-4">
-                                <div className="flex bg-slate-800/80 p-1 rounded-xl">
-                                    <button onClick={() => setHasDownPayment(true)} className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase transition-all ${hasDownPayment ? 'bg-indigo-600 shadow-lg' : 'text-slate-500'}`}>Со взносом</button>
-                                    <button onClick={() => setHasDownPayment(false)} className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase transition-all ${!hasDownPayment ? 'bg-indigo-600 shadow-lg' : 'text-slate-500'}`}>Без взноса</button>
-                                </div>
-                                <div className="grid grid-cols-4 gap-2">
-                                    {[3, 6, 9, 12].map(m => (
-                                        <button key={m} onClick={() => setMonths(m)} className={`py-3 rounded-xl border-2 transition-all ${months === m ? 'border-indigo-600 bg-indigo-600/10 text-indigo-400' : 'border-slate-800 text-slate-500'}`}>
-                                            <div className="text-sm font-bold">{m}м</div>
-                                            <div className="text-[8px] opacity-60">+{Math.round(getConditions(m, hasDownPayment).rate * 100)}%</div>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="bg-slate-800/30 rounded-2xl p-4 border border-slate-800">
-                                <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase mb-2">
-                                    <span>Наценка: {Math.round(markupValue).toLocaleString()} ₽</span>
-                                    <span className="text-indigo-400">Итого: {Math.round(totalWithMarkup).toLocaleString()} ₽</span>
-                                </div>
-                                <div className="h-px bg-slate-800 w-full mb-4"></div>
-                                
-                                {isAmountValid && (
-                                    <div className="space-y-2">
-                                        {hasDownPayment && (
-                                            <div className="flex justify-between bg-indigo-600/20 p-3 rounded-xl border border-indigo-500/30">
-                                                <span className="text-xs font-bold uppercase">Взнос 20%</span>
-                                                <span className="font-bold">{Math.round(downPaymentAmount).toLocaleString()} ₽</span>
-                                            </div>
-                                        )}
-                                        <div className="max-h-[200px] overflow-y-auto pr-1 space-y-2 no-scrollbar">
-                                            {[...Array(months)].map((_, i) => (
-                                                <div key={i} className="flex justify-between bg-slate-800/50 p-3 rounded-xl text-sm">
-                                                    <span className="text-slate-500">{i+1} платеж</span>
-                                                    <span className="font-bold">{Math.round(monthlyPayment).toLocaleString()} ₽</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {isAmountValid && (
-                                <button onClick={shareCalculation} className="w-full bg-indigo-600 hover:bg-indigo-500 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 uppercase text-xs tracking-widest shadow-lg shadow-indigo-900/20">
-                                    <Icon name="share-2" size={16} />
-                                    Отправить клиенту
-                                </button>
-                            )}
-                        </div>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Сумма товара</label>
+                <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
+                        <Icon name="banknote" size={20} />
                     </div>
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                const swCode = `
-                    self.addEventListener('install', e => e.waitUntil(caches.open('v1').then(c => c.addAll(['/']))));
-                    self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
-                `;
-                const blob = new Blob([swCode], { type: 'application/javascript' });
-                navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
-            });
-        }
-    </script>
-</body>
-</html>
+            <input
+                type="text"
+                inputMode="numeric"
+                value={totalAmount === 0 ? '' : totalAmount.toLocaleString('ru-RU')}
+                onChange={handleAmountChange}
+                className={`w-full pl-12 pr-10 py-4 bg-slate-800/50 border-2 rounded-2xl text-xl font-bold outline-none transition-all ${totalAmount > 0 && !isAmountValid ? 'border-red-500/50' : 'border-slate-800 focus:border-indigo-600'}`}
+                placeholder="0"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">₽</span>
+        </div>
