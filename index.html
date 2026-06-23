@@ -62,7 +62,7 @@ const monthly=(total-down)/months;
 
 const valid=amount>=20000 && amount<= (dp?500000:120000);
 
-/* ✅ КНОПКА "ОТПРАВИТЬ КЛИЕНТУ" */
+/* SHARE */
 function shareCalc(){
 
 let text =
@@ -88,6 +88,11 @@ text += `${i} месяц: ${Math.round(monthly).toLocaleString("ru-RU")} ₽
 `;
 }
 
+function copyFallback(){
+navigator.clipboard.writeText(text);
+alert("Скопировано в буфер");
+}
+
 if(navigator.share){
 navigator.share({
 title:"График платежей",
@@ -95,33 +100,6 @@ text
 }).catch(copyFallback);
 }else{
 copyFallback();
-}
-
-function copyFallback(){
-navigator.clipboard.writeText(text);
-alert("Скопировано в буфер");
-}
-}
-
-const text =
-`📋 РАССРОЧКА
-
-Сумма: ${amount.toLocaleString("ru-RU")} ₽
-Срок: ${months} мес.
-Итого: ${Math.round(total).toLocaleString("ru-RU")} ₽`;
-
-if(navigator.share){
-navigator.share({
-title:"Рассрочка",
-text
-}).catch(copyFallback);
-}else{
-copyFallback();
-}
-
-function copyFallback(){
-navigator.clipboard.writeText(text);
-alert("Скопировано в буфер");
 }
 }
 
