@@ -65,6 +65,44 @@ const valid=amount>=20000 && amount<= (dp?500000:120000);
 /* ✅ КНОПКА "ОТПРАВИТЬ КЛИЕНТУ" */
 function shareCalc(){
 
+let text =
+`📋 ГРАФИК ПЛАТЕЖЕЙ
+
+Сумма: ${amount.toLocaleString("ru-RU")} ₽
+Срок: ${months} мес.
+Итого: ${Math.round(total).toLocaleString("ru-RU")} ₽
+
+`;
+
+if(dp){
+text += `Первый взнос: ${Math.round(down).toLocaleString("ru-RU")} ₽
+
+`;
+}
+
+text += `ПЛАТЕЖИ:
+`;
+
+for(let i=1;i<=months;i++){
+text += `${i} месяц: ${Math.round(monthly).toLocaleString("ru-RU")} ₽
+`;
+}
+
+if(navigator.share){
+navigator.share({
+title:"График платежей",
+text
+}).catch(copyFallback);
+}else{
+copyFallback();
+}
+
+function copyFallback(){
+navigator.clipboard.writeText(text);
+alert("Скопировано в буфер");
+}
+}
+
 const text =
 `📋 РАССРОЧКА
 
