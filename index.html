@@ -19,7 +19,6 @@ font-family:system-ui;
 .custom-shadow{
 box-shadow:0 20px 50px rgba(0,0,0,.5);
 }
-.no-scrollbar::-webkit-scrollbar{display:none;}
 </style>
 </head>
 
@@ -49,29 +48,50 @@ const [amount,setAmount]=useState(0);
 const [dp,setDp]=useState(true);
 const [months,setMonths]=useState(3);
 
-const get=(m,dp)=>{
+function getRate(m,dp){
 if(dp){
-return {
-3:0.08,6:0.16,9:0.23,12:0.30
-}[m];
+return {3:0.08,6:0.16,9:0.23,12:0.30}[m];
 }
-return {
-3:0.12,6:0.22,9:0.33,12:0.42
-}[m];
-};
+return {3:0.12,6:0.22,9:0.33,12:0.42}[m];
+}
 
-const rate=get(months,dp);
+const rate=getRate(months,dp);
 const total=amount + amount*rate;
 const down=dp?total*0.2:0;
 const monthly=(total-down)/months;
 
 const valid=amount>=20000 && amount<= (dp?500000:120000);
 
-return e("div",{className:"min-h-screen bg-slate-900 text-slate-100 flex justify-center p-4"},
+/* ✅ КНОПКА "ОТПРАВИТЬ КЛИЕНТУ" */
+function shareCalc(){
 
-e("div",{className:"w-full max-w-xl bg-slate-900 custom-shadow rounded-[2rem] overflow-hidden border border-slate-800"},
+const text =
+`📋 РАССРОЧКА
 
-// HEADER (как у тебя)
+Сумма: ${amount.toLocaleString("ru-RU")} ₽
+Срок: ${months} мес.
+Итого: ${Math.round(total).toLocaleString("ru-RU")} ₽`;
+
+if(navigator.share){
+navigator.share({
+title:"Рассрочка",
+text
+}).catch(copyFallback);
+}else{
+copyFallback();
+}
+
+function copyFallback(){
+navigator.clipboard.writeText(text);
+alert("Скопировано в буфер");
+}
+}
+
+return e("div",{className:"min-h-screen bg-slate-900 text-white flex justify-center p-4"},
+
+e("div",{className:"w-full max-w-xl bg-slate-900 custom-shadow rounded-3xl overflow-hidden border border-slate-800"},
+
+/* HEADER */
 e("div",{className:"bg-indigo-600 p-6 flex gap-3 items-center"},
 e(Icon,{name:"calculator",size:24}),
 e("h1",{className:"text-xl font-bold uppercase"},"Рассрочка")
@@ -79,7 +99,7 @@ e("h1",{className:"text-xl font-bold uppercase"},"Рассрочка")
 
 e("div",{className:"p-5 space-y-6"},
 
-// INPUT
+/* INPUT */
 e("input",{
 value:amount?amount.toLocaleString("ru-RU"):"",
 onChange:(e)=>setAmount(Number(e.target.value.replace(/\D/g,"")||0)),
@@ -87,7 +107,7 @@ placeholder:"Сумма товара",
 className:"w-full p-4 bg-slate-800 rounded-2xl text-xl font-bold outline-none"
 }),
 
-// TOGGLE BUTTONS (как у тебя)
+/* TOGGLE */
 e("div",{className:"flex bg-slate-800 p-1 rounded-xl"},
 e("button",{
 onClick:()=>setDp(true),
@@ -100,7 +120,7 @@ className:`flex-1 py-2 rounded-lg font-bold ${!dp?"bg-indigo-600":"text-slate-50
 },"Без взноса")
 ),
 
-// MONTHS
+/* MONTHS */
 e("div",{className:"grid grid-cols-4 gap-2"},
 [3,6,9,12].map(m=>
 e("button",{
@@ -113,12 +133,12 @@ months===m
 }`
 },
 e("div",{className:"text-sm font-bold"},m+"м"),
-e("div",{className:"text-[10px] opacity-60"},"+"+Math.round(get(m,dp)*100)+"%")
+e("div",{className:"text-[10px] opacity-60"},"+"+Math.round(getRate(m,dp)*100)+"%")
 )
 )
 ),
 
-// RESULT BLOCK
+/* RESULT */
 valid && e("div",{className:"bg-slate-800/30 rounded-2xl p-4 border border-slate-800 space-y-2"},
 
 e("div",{className:"flex justify-between text-sm text-slate-400"},
@@ -146,10 +166,12 @@ e("span",null,Math.round(monthly).toLocaleString("ru-RU")+" ₽")
 )
 ),
 
-// BUTTON
+/* BUTTON */
 valid && e("button",{
+onClick:shareCalc,
 className:"w-full bg-indigo-600 hover:bg-indigo-500 py-4 rounded-2xl font-bold uppercase"
-},"Отправить клиенту")
+},
+"Отправить клиенту")
 
 )
 )
